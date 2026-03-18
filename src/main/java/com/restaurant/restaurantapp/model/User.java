@@ -1,25 +1,27 @@
 package com.restaurant.restaurantapp.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
-@Data
+@Table(name = "app_user")
+@Getter
+@Setter
+@NoArgsConstructor
 public class User {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Username is required")
+    @Column(nullable = false, unique = true)
     private String username;
 
-    @NotBlank(message = "Password is required")
+    @Column(nullable = false)
     private String password;
 
-    @NotBlank(message = "Role is required")
+    @Column(nullable = false)
     private String role;
 }

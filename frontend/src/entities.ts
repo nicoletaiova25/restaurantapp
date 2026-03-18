@@ -23,7 +23,7 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'users',
     label: 'Users',
-    endpoint: '/api/users',
+    endpoint: '/users',
     fields: [
       { key: 'username', label: 'Username', type: 'text', required: true },
       { key: 'password', label: 'Password', type: 'text', required: true },
@@ -33,13 +33,13 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'categories',
     label: 'Categories',
-    endpoint: '/api/categories',
+    endpoint: '/categories',
     fields: [{ key: 'name', label: 'Name', type: 'text', required: true }],
   },
   {
     key: 'restaurant-tables',
     label: 'Restaurant Tables',
-    endpoint: '/api/restaurant-tables',
+    endpoint: '/restaurant-tables',
     fields: [
       { key: 'tableNumber', label: 'Table Number', type: 'number', required: true, min: 1, integer: true },
       { key: 'seats', label: 'Seats', type: 'number', required: true, min: 1, integer: true },
@@ -49,7 +49,7 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'menu-items',
     label: 'Menu Items',
-    endpoint: '/api/menu-items',
+    endpoint: '/menu-items',
     fields: [
       { key: 'name', label: 'Name', type: 'text', required: true },
       { key: 'price', label: 'Price', type: 'number', required: true, min: 0.01 },
@@ -59,7 +59,7 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'orders',
     label: 'Orders',
-    endpoint: '/api/orders',
+    endpoint: '/orders',
     fields: [
       { key: 'tableId', label: 'Table ID', type: 'relationId', required: true, relationName: 'table' },
       { key: 'waiterId', label: 'Waiter ID', type: 'relationId', required: true, relationName: 'waiter' },
@@ -70,7 +70,7 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'order-items',
     label: 'Order Items',
-    endpoint: '/api/order-items',
+    endpoint: '/order-items',
     fields: [
       { key: 'orderId', label: 'Order ID', type: 'relationId', required: true, relationName: 'order' },
       { key: 'menuItemId', label: 'Menu Item ID', type: 'relationId', required: true, relationName: 'menuItem' },
@@ -80,7 +80,7 @@ export const entityConfigs: EntityConfig[] = [
   {
     key: 'payments',
     label: 'Payments',
-    endpoint: '/api/payments',
+    endpoint: '/payments',
     fields: [
       { key: 'orderId', label: 'Order ID', type: 'relationId', required: true, relationName: 'order' },
       { key: 'method', label: 'Method', type: 'text', required: true },

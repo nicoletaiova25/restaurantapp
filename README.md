@@ -229,26 +229,3 @@ If you want to improve the frontend:
 5. Add authentication/login
 
 Backend is feature-complete for the requirements! ✓
-
-## CI: Docker Image Publish (GitHub Actions)
-
-This repository includes `.github/workflows/docker-build-and-push.yml`.
-
-Before running the workflow, set these repository secrets:
-- `DOCKERHUB_USERNAME` (your Docker Hub username)
-- `DOCKERHUB_TOKEN` (Docker Hub access token from Docker Hub Security settings)
-
-The workflow:
-- runs backend tests and frontend build in a `verify` job,
-- then builds and pushes backend/frontend images to Docker Hub on `main` or `master` pushes, or manual runs.
-
-### Trigger manually
-
-1. Open your repository on GitHub.
-2. Go to `Actions`.
-3. Select `Build and push Docker images`.
-4. Click `Run workflow`.
-
-Published tags include:
-- `latest`
-- commit SHA tag (for example `sha-<shortsha>` depending on metadata format)

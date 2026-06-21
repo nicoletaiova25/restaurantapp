@@ -1,32 +1,11 @@
+# Docker configuration removed
+# This file was intentionally cleared — Docker-related setup has been removed per request.
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: restaurantapp-db
-    environment:
-      POSTGRES_DB: restaurant
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d restaurant"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nicoletaiova258/restaurantapp-backend:latest
-    container_name: restaurantapp-backend
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-    depends_on:
-      db:
-        condition: service_healthy
+    container_name: restaurant-backend
     ports:
       - "8080:8080"
 
@@ -34,12 +13,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: nicoletaiova258/restaurantapp-frontend:latest
-    container_name: restaurantapp-frontend
+    container_name: restaurant-frontend
+    ports:
+      - "5173:80"
     depends_on:
       - backend
-    ports:
-      - "3000:80"
-
-volumes:
-  postgres_data:

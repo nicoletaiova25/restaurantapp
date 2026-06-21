@@ -9,3 +9,5 @@ spring:
       ddl-auto: update
     show-sql: true
 
+# application-docker.yml removed
+# Docker-specific Spring profile removed per request.

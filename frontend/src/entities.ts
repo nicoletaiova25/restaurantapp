@@ -1,6 +1,11 @@
 import type { EntityName } from './types';
 
-export type FieldType = 'text' | 'number' | 'boolean' | 'relationId';
+export type FieldType = 'text' | 'number' | 'boolean' | 'relationId' | 'select';
+
+export type SelectOption = {
+  value: string;
+  label: string;
+};
 
 export type EntityField = {
   key: string;
@@ -9,7 +14,20 @@ export type EntityField = {
   required?: boolean;
   min?: number;
   integer?: boolean;
+
+  // Used for relation fields. Example: key = waiter, relationName = waiter.
   relationName?: string;
+
+  // Exact backend endpoint used to load dropdown values.
+  // Example: /users, /categories, /restaurant-tables.
+  endpoint?: string;
+
+  // Field displayed in dropdown instead of id.
+  // Example: username, name, tableNumber.
+  labelField?: string;
+
+  // Static dropdown values, used for role, payment method, status etc.
+  options?: SelectOption[];
 };
 
 export type EntityConfig = {
@@ -27,14 +45,26 @@ export const entityConfigs: EntityConfig[] = [
     fields: [
       { key: 'username', label: 'Username', type: 'text', required: true },
       { key: 'password', label: 'Password', type: 'text', required: true },
-      { key: 'role', label: 'Role', type: 'text', required: true },
+      {
+        key: 'role',
+        label: 'Role',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'MANAGER', label: 'Manager' },
+          { value: 'WAITER', label: 'Ospatar' },
+          { value: 'BARTENDER', label: 'Barman' },
+        ],
+      },
     ],
   },
   {
     key: 'categories',
     label: 'Categories',
     endpoint: '/categories',
-    fields: [{ key: 'name', label: 'Name', type: 'text', required: true }],
+    fields: [
+      { key: 'name', label: 'Name', type: 'text', required: true },
+    ],
   },
   {
     key: 'restaurant-tables',
@@ -43,7 +73,15 @@ export const entityConfigs: EntityConfig[] = [
     fields: [
       { key: 'tableNumber', label: 'Table Number', type: 'number', required: true, min: 1, integer: true },
       { key: 'seats', label: 'Seats', type: 'number', required: true, min: 1, integer: true },
-      { key: 'waiterId', label: 'Waiter ID', type: 'relationId', required: true, relationName: 'waiter' },
+      {
+        key: 'waiter',
+        label: 'Waiter Username',
+        type: 'relationId',
+        required: true,
+        relationName: 'waiter',
+        endpoint: '/users',
+        labelField: 'username',
+      },
     ],
   },
   {
@@ -53,7 +91,15 @@ export const entityConfigs: EntityConfig[] = [
     fields: [
       { key: 'name', label: 'Name', type: 'text', required: true },
       { key: 'price', label: 'Price', type: 'number', required: true, min: 0.01 },
-      { key: 'categoryId', label: 'Category ID', type: 'relationId', required: true, relationName: 'category' },
+      {
+        key: 'category',
+        label: 'Category Name',
+        type: 'relationId',
+        required: true,
+        relationName: 'category',
+        endpoint: '/categories',
+        labelField: 'name',
+      },
     ],
   },
   {
@@ -61,10 +107,24 @@ export const entityConfigs: EntityConfig[] = [
     label: 'Orders',
     endpoint: '/orders',
     fields: [
-      { key: 'tableId', label: 'Table ID', type: 'relationId', required: true, relationName: 'table' },
-      { key: 'waiterId', label: 'Waiter ID', type: 'relationId', required: true, relationName: 'waiter' },
-      { key: 'status', label: 'Status', type: 'text', required: true },
-      { key: 'totalPrice', label: 'Total Price', type: 'number', required: true, min: 0 },
+      {
+        key: 'tableId',
+        label: 'Table Number',
+        type: 'relationId',
+        required: true,
+        relationName: 'table',
+        endpoint: '/restaurant-tables',
+        labelField: 'tableNumber'
+      },
+      {
+        key: 'waiterId',
+        label: 'Waiter Username',
+        type: 'relationId',
+        required: true,
+        relationName: 'waiter',
+        endpoint: '/users',
+        labelField: 'username'
+      }
     ],
   },
   {
@@ -72,8 +132,24 @@ export const entityConfigs: EntityConfig[] = [
     label: 'Order Items',
     endpoint: '/order-items',
     fields: [
-      { key: 'orderId', label: 'Order ID', type: 'relationId', required: true, relationName: 'order' },
-      { key: 'menuItemId', label: 'Menu Item ID', type: 'relationId', required: true, relationName: 'menuItem' },
+      {
+        key: 'order',
+        label: 'Order',
+        type: 'relationId',
+        required: true,
+        relationName: 'order',
+        endpoint: '/orders',
+        labelField: 'id',
+      },
+      {
+        key: 'menuItem',
+        label: 'Menu Item Name',
+        type: 'relationId',
+        required: true,
+        relationName: 'menuItem',
+        endpoint: '/menu-items',
+        labelField: 'name',
+      },
       { key: 'quantity', label: 'Quantity', type: 'number', required: true, min: 1, integer: true },
     ],
   },
@@ -82,8 +158,25 @@ export const entityConfigs: EntityConfig[] = [
     label: 'Payments',
     endpoint: '/payments',
     fields: [
-      { key: 'orderId', label: 'Order ID', type: 'relationId', required: true, relationName: 'order' },
-      { key: 'method', label: 'Method', type: 'text', required: true },
+      {
+        key: 'order',
+        label: 'Order',
+        type: 'relationId',
+        required: true,
+        relationName: 'order',
+        endpoint: '/orders',
+        labelField: 'id',
+      },
+      {
+        key: 'method',
+        label: 'Method',
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'CASH', label: 'Cash' },
+          { value: 'CARD', label: 'Card' },
+        ],
+      },
       { key: 'paid', label: 'Paid', type: 'boolean', required: true },
     ],
   },
@@ -109,6 +202,14 @@ export const validateEntityForm = (entity: EntityConfig, values: Record<string, 
 
     if (field.required && (value === '' || value === undefined)) {
       errors[field.key] = `${field.label} este obligatoriu.`;
+      return;
+    }
+
+    if (field.type === 'select' && value !== '' && value !== undefined) {
+      const allowedValues = field.options?.map((option) => option.value) ?? [];
+      if (allowedValues.length > 0 && !allowedValues.includes(String(value))) {
+        errors[field.key] = `${field.label} trebuie ales din lista.`;
+      }
       return;
     }
 

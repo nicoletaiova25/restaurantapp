@@ -5,9 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 @Entity
@@ -27,9 +25,7 @@ public class Order {
     @ManyToOne
     private User waiter;
 
-    @NotBlank(message = "Order status is required")
-    private String status;
+    private String status = "OPEN";
 
-    @PositiveOrZero(message = "Total price cannot be negative")
-    private double totalPrice;
+    private double totalPrice = 0.0;
 }

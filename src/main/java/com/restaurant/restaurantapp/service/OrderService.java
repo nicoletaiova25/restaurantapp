@@ -28,24 +28,43 @@ public class OrderService {
 
     public Order createOrder(Order order) {
         validatePayload(order, "Order payload is required");
+
+        if (order.getTable() == null || order.getTable().getId() == null) {
+            throw new BadRequestException("Table is required");
+        }
+
+        if (order.getWaiter() == null || order.getWaiter().getId() == null) {
+            throw new BadRequestException("Waiter is required");
+        }
+
+        order.setStatus("OPEN");
+        order.setTotalPrice(0.0);
+
         return orderRepository.save(order);
     }
 
     public Order updateOrder(Long id, Order updatedOrder) {
         validatePayload(updatedOrder, "Updated order payload is required");
+
         Order order = getOrderById(id);
+
         order.setTable(updatedOrder.getTable());
         order.setWaiter(updatedOrder.getWaiter());
-        order.setStatus(updatedOrder.getStatus());
-        order.setTotalPrice(updatedOrder.getTotalPrice());
+
+        if (updatedOrder.getStatus() != null && !updatedOrder.getStatus().isBlank()) {
+            order.setStatus(updatedOrder.getStatus());
+        }
+
         return orderRepository.save(order);
     }
 
     public void deleteOrder(Long id) {
         validateId(id);
+
         if (!orderRepository.existsById(id)) {
             throw new ResourceNotFoundException("Order", "id", id);
         }
+
         orderRepository.deleteById(id);
     }
 

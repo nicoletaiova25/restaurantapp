@@ -7,6 +7,9 @@ import com.restaurant.restaurantapp.repository.MenuItemRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class MenuItemService {
 
@@ -58,5 +61,9 @@ public class MenuItemService {
         if (payload == null) {
             throw new BadRequestException(message);
         }
+    }
+
+    public Page<MenuItem> getAllMenuItems(Pageable pageable) {
+        return menuItemRepository.findAll(pageable);
     }
 }

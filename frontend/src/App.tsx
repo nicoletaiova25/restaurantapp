@@ -3,6 +3,9 @@ import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams }
 import { ApiError, api } from './api';
 import { entityConfigByKey, entityConfigs, validateEntityForm, type EntityConfig, type EntityField } from './entities';
 import type { EntityName } from './types';
+import LoginPage from './LoginPage';
+import RegisterPage from './RegisterPage';
+
 
 type FormValues = Record<string, string | boolean>;
 type Row = Record<string, any>;
@@ -201,12 +204,19 @@ function EntityCrudPage() {
   const refreshAll = async () => {
     if (!entity) return;
 
-    await withApi(async () => {
-      const data = await api.getAll<Row>(entity.endpoint);
-      setRows(data);
-      setStatus(`Loaded ${data.length} ${entity.label.toLowerCase()}.`);
-    });
-  };
+  const data = await api.getAll<any>(entity.endpoint);
+
+  const pageData = data as any;
+
+  const rowsData = Array.isArray(pageData)
+    ? pageData
+    : Array.isArray(pageData?.content)
+      ? pageData.content
+      : [];
+
+  setRows(rowsData);
+  setStatus(`Loaded ${rowsData.length} ${entity.label.toLowerCase()}.`);
+   };
 
   useEffect(() => {
     refreshAll();
@@ -221,13 +231,23 @@ function EntityCrudPage() {
 
       for (const field of relationFields) {
         try {
-          const data = await api.getAll<Row>(field.endpoint as string);
+         // const data = await api.getAll<Row>(field.endpoint as string);
           const key = field.relationName ?? field.key;
 
-          const opts = data.map((item) => ({
-            id: Number(item.id),
-            label: buildRelationLabel(item, field),
-          }));
+         const data = await api.getAll<any>(field.endpoint as string);
+
+         const pageData = data as any;
+
+         const optionData = Array.isArray(pageData)
+           ? pageData
+           : Array.isArray(pageData?.content)
+             ? pageData.content
+             : [];
+
+         const opts = optionData.map((item: Row) => ({
+           id: Number(item.id),
+           label: buildRelationLabel(item, field),
+         }));
 
           setRelationOptions((prev) => ({
             ...prev,
@@ -536,6 +556,36 @@ function ServerErrorPage() {
 function App() {
   const firstEntityPath = useMemo(() => `/entities/${entityConfigs[0].key}`, []);
 
+
+  const getLoggedUser = () => {
+    const fromLocalStorage = localStorage.getItem('loggedUser');
+    const fromSessionStorage = sessionStorage.getItem('loggedUser');
+
+    const rawUser = fromLocalStorage ?? fromSessionStorage;
+
+    if (!rawUser) {
+      return null;
+    }
+
+    return JSON.parse(rawUser);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('loggedUser');
+    sessionStorage.removeItem('loggedUser');
+    window.location.href = '/login';
+  };
+
+  function ProtectedRoute({ children }: { children: React.ReactNode }) {
+    const user = getLoggedUser();
+
+    if (!user) {
+      return <Navigate to="/login" replace />;
+    }
+
+    return children;
+  }
+
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -552,12 +602,33 @@ function App() {
           </NavLink>
         ))}
 
+        <button type="button" className="tab" onClick={logout}>
+          Logout
+        </button>
+
         <footer className="sidebar-footer">Made with ❤️ in Paris</footer>
       </aside>
 
       <Routes>
-        <Route path="/" element={<Navigate to={firstEntityPath} replace />} />
-        <Route path="/entities/:entityKey" element={<EntityCrudPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+       <Route
+         path="/"
+         element={
+           <ProtectedRoute>
+             <Navigate to={firstEntityPath} replace />
+           </ProtectedRoute>
+         }
+       />
+
+       <Route
+         path="/entities/:entityKey"
+         element={
+           <ProtectedRoute>
+             <EntityCrudPage />
+           </ProtectedRoute>
+         }
+       />
         <Route path="/error/500" element={<ServerErrorPage />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<Navigate to="/404" replace />} />

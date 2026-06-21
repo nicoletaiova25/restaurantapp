@@ -1,4 +1,16 @@
 services:
+  db:
+    image: postgres:16
+    container_name: restaurant-db
+    environment:
+      POSTGRES_DB: restaurant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
   backend:
     build:
       context: .
@@ -6,8 +18,10 @@ services:
     container_name: restaurant-backend
     ports:
       - "8080:8080"
-    volumes:
-      - ./data:/app/data
+    depends_on:
+      - db
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
 
   frontend:
     build:
@@ -18,3 +32,6 @@ services:
       - "5173:80"
     depends_on:
       - backend
+
+volumes:
+  postgres-data:

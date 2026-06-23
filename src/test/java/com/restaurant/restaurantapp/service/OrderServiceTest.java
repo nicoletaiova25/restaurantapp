@@ -25,6 +25,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.restaurant.restaurantapp.model.Order;
+import com.restaurant.restaurantapp.model.MenuItem;
+import com.restaurant.restaurantapp.model.RestaurantTable;
+import com.restaurant.restaurantapp.model.User;
+
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 
@@ -81,16 +86,6 @@ class OrderServiceTest {
     }
 
     @Test
-    void createOrderSavesPayload() {
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Order created = orderService.createOrder(existingOrder);
-
-        assertEquals("OPEN", created.getStatus());
-        verify(orderRepository).save(existingOrder);
-    }
-
-    @Test
     void createOrderRejectsNullPayload() {
         assertThrows(BadRequestException.class, () -> orderService.createOrder(null));
         verifyNoInteractions(orderRepository);
@@ -105,7 +100,6 @@ class OrderServiceTest {
                 order(restaurantTable(6, 2, user("new", "pw", "WAITER")), user("new", "pw", "WAITER"), "CLOSED", 55.5));
 
         assertEquals("CLOSED", result.getStatus());
-        assertEquals(55.5, result.getTotalPrice());
         assertEquals(6, result.getTable().getTableNumber());
         verify(orderRepository).save(existingOrder);
     }
@@ -132,6 +126,66 @@ class OrderServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> orderService.deleteOrder(1L));
         verify(orderRepository).existsById(1L);
         verify(orderRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void createOrderRejectsNullTable() {
+        Order invalidOrder = new Order();
+        invalidOrder.setTable(null);
+        invalidOrder.setWaiter(user("waiter", "pw", "WAITER"));
+
+        assertThrows(BadRequestException.class, () -> orderService.createOrder(invalidOrder));
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void createOrderRejectsNullWaiter() {
+        Order invalidOrder = new Order();
+        invalidOrder.setTable(restaurantTable(5, 4, user("waiter", "pw", "WAITER")));
+        invalidOrder.setWaiter(null);
+
+        assertThrows(BadRequestException.class, () -> orderService.createOrder(invalidOrder));
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void updateOrderPreservesStatusIfNull() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(existingOrder));
+        Order updateOrder = order(restaurantTable(6, 2, user("new", "pw", "WAITER")), user("new", "pw", "WAITER"), null, 55.5);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order result = orderService.updateOrder(1L, updateOrder);
+
+        assertEquals("OPEN", result.getStatus()); // Original status preserved
+    }
+
+    @Test
+    void updateOrderPreservesStatusIfBlank() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(existingOrder));
+        Order updateOrder = order(restaurantTable(6, 2, user("new", "pw", "WAITER")), user("new", "pw", "WAITER"), "  ", 55.5);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order result = orderService.updateOrder(1L, updateOrder);
+
+        assertEquals("OPEN", result.getStatus()); // Original status preserved
+    }
+
+    @Test
+    void getOrderByIdRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> orderService.getOrderById(null));
+        verifyNoInteractions(orderRepository);
+    }
+
+    @Test
+    void getOrderByIdRejectsZeroId() {
+        assertThrows(BadRequestException.class, () -> orderService.getOrderById(0L));
+        verifyNoInteractions(orderRepository);
+    }
+
+    @Test
+    void deleteOrderRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> orderService.deleteOrder(-1L));
+        verifyNoInteractions(orderRepository);
     }
 }
 

@@ -2,8 +2,10 @@ package com.restaurant.restaurantapp.service;
 
 import com.restaurant.restaurantapp.exception.BadRequestException;
 import com.restaurant.restaurantapp.exception.ResourceNotFoundException;
+import com.restaurant.restaurantapp.model.MenuItem;
 import com.restaurant.restaurantapp.model.Order;
 import com.restaurant.restaurantapp.model.OrderItem;
+import com.restaurant.restaurantapp.repository.MenuItemRepository;
 import com.restaurant.restaurantapp.repository.OrderItemRepository;
 import com.restaurant.restaurantapp.repository.OrderRepository;
 import java.util.List;
@@ -14,10 +16,16 @@ public class OrderItemService {
 
     private final OrderItemRepository orderItemRepository;
     private final OrderRepository orderRepository;
+    private final MenuItemRepository menuItemRepository;
 
-    public OrderItemService(OrderItemRepository orderItemRepository, OrderRepository orderRepository) {
+    public OrderItemService(
+            OrderItemRepository orderItemRepository,
+            OrderRepository orderRepository,
+            MenuItemRepository menuItemRepository
+    ) {
         this.orderItemRepository = orderItemRepository;
         this.orderRepository = orderRepository;
+        this.menuItemRepository = menuItemRepository;
     }
 
     public List<OrderItem> getAllOrderItems() {
@@ -37,11 +45,17 @@ public class OrderItemService {
         Order order = orderRepository.findById(orderItem.getOrder().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderItem.getOrder().getId()));
 
+        MenuItem menuItem = menuItemRepository.findById(orderItem.getMenuItem().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Menu item", "id", orderItem.getMenuItem().getId()));
+
         if (!"OPEN".equalsIgnoreCase(order.getStatus())) {
             throw new BadRequestException("You can add items only to an OPEN order");
         }
 
-        double itemTotal = orderItem.getMenuItem().getPrice() * orderItem.getQuantity();
+        orderItem.setOrder(order);
+        orderItem.setMenuItem(menuItem);
+
+        double itemTotal = menuItem.getPrice() * orderItem.getQuantity();
 
         OrderItem savedItem = orderItemRepository.save(orderItem);
 
@@ -60,21 +74,24 @@ public class OrderItemService {
         Order oldOrder = oldItem.getOrder();
         double oldTotal = oldItem.getMenuItem().getPrice() * oldItem.getQuantity();
 
-        oldOrder.setTotalPrice(oldOrder.getTotalPrice() - oldTotal);
+        oldOrder.setTotalPrice(Math.max(0, oldOrder.getTotalPrice() - oldTotal));
         orderRepository.save(oldOrder);
 
         Order newOrder = orderRepository.findById(updatedOrderItem.getOrder().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", updatedOrderItem.getOrder().getId()));
 
+        MenuItem newMenuItem = menuItemRepository.findById(updatedOrderItem.getMenuItem().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Menu item", "id", updatedOrderItem.getMenuItem().getId()));
+
         if (!"OPEN".equalsIgnoreCase(newOrder.getStatus())) {
             throw new BadRequestException("You can update items only for an OPEN order");
         }
 
-        oldItem.setOrder(updatedOrderItem.getOrder());
-        oldItem.setMenuItem(updatedOrderItem.getMenuItem());
+        oldItem.setOrder(newOrder);
+        oldItem.setMenuItem(newMenuItem);
         oldItem.setQuantity(updatedOrderItem.getQuantity());
 
-        double newTotal = updatedOrderItem.getMenuItem().getPrice() * updatedOrderItem.getQuantity();
+        double newTotal = newMenuItem.getPrice() * updatedOrderItem.getQuantity();
 
         OrderItem savedItem = orderItemRepository.save(oldItem);
 

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { ApiError, api } from './api';
 import { entityConfigByKey, entityConfigs, validateEntityForm, type EntityConfig, type EntityField } from './entities';
 import type { EntityName } from './types';
 import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
-
+import Select from 'react-select';
 
 type FormValues = Record<string, string | boolean>;
 type Row = Record<string, any>;
@@ -13,6 +13,87 @@ type Row = Record<string, any>;
 type RelationOption = {
   id: number;
   label: string;
+};
+
+type LoggedUser = {
+  id: number;
+  username: string;
+  role: string;
+};
+
+const getLoggedUser = (): LoggedUser | null => {
+  const rawUser = localStorage.getItem('loggedUser') ?? sessionStorage.getItem('loggedUser');
+
+  if (!rawUser) return null;
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    localStorage.removeItem('loggedUser');
+    sessionStorage.removeItem('loggedUser');
+    return null;
+  }
+};
+
+const canAccessEntity = (entityKey: string) => {
+  const user = getLoggedUser();
+  if (!user) return false;
+
+  if (user.role === 'ADMIN' || user.role === 'MANAGER') return true;
+
+  if (user.role === 'WAITER') {
+    return ['orders', 'order-items', 'payments'].includes(entityKey);
+  }
+
+  if (user.role === 'BARTENDER') {
+    return ['orders', 'order-items'].includes(entityKey);
+  }
+
+  return false;
+};
+
+const getFirstEntityPath = () => {
+  const user = getLoggedUser();
+
+  if (!user) return '/login';
+
+  if (user.role === 'WAITER') return '/entities/orders';
+  if (user.role === 'BARTENDER') return '/entities/orders';
+
+  const firstAllowed = entityConfigs.find((entity) => canAccessEntity(entity.key));
+  return firstAllowed ? `/entities/${firstAllowed.key}` : '/404';
+};
+
+const filterRowsByRole = (entityKey: string | undefined, rows: Row[]) => {
+  const user = getLoggedUser();
+
+  if (!user) return [];
+
+  if (user.role === 'ADMIN' || user.role === 'MANAGER') {
+    return rows;
+  }
+
+  if (user.role === 'WAITER') {
+    if (entityKey === 'orders') {
+      return rows.filter((order) => order.waiter?.id === user.id);
+    }
+
+    if (entityKey === 'order-items') {
+      return rows.filter((item) => item.order?.waiter?.id === user.id);
+    }
+
+    if (entityKey === 'payments') {
+      return rows.filter((payment) => payment.order?.waiter?.id === user.id);
+    }
+  }
+
+  if (user.role === 'BARTENDER') {
+    if (entityKey === 'orders' || entityKey === 'order-items') {
+      return rows;
+    }
+  }
+
+  return [];
 };
 
 const createInitialValues = (entity: EntityConfig): FormValues => {
@@ -58,10 +139,7 @@ const getNestedValue = (row: Row, field: EntityField): unknown => {
     const relation = row[relationName];
 
     if (relation && typeof relation === 'object') {
-      if (field.labelField && relation[field.labelField] !== undefined) {
-        return relation[field.labelField];
-      }
-
+      if (field.labelField && relation[field.labelField] !== undefined) return relation[field.labelField];
       if (relation.name !== undefined) return relation.name;
       if (relation.username !== undefined) return relation.username;
       if (relation.tableNumber !== undefined) return relation.tableNumber;
@@ -78,22 +156,18 @@ const buildRelationLabel = (item: Row, field: EntityField): string => {
   const labelField = field.labelField;
 
   if (field.relationName === 'order') {
-    const tableNumber = item.table?.tableNumber;
-    const waiterUsername = item.waiter?.username;
-    const totalPrice = item.totalPrice;
-
     const parts = [`Order #${item.id}`];
 
-    if (tableNumber !== undefined) {
-      parts.push(`Table ${tableNumber}`);
+    if (item.table?.tableNumber !== undefined) {
+      parts.push(`Table ${item.table.tableNumber}`);
     }
 
-    if (waiterUsername !== undefined) {
-      parts.push(`Waiter ${waiterUsername}`);
+    if (item.waiter?.username !== undefined) {
+      parts.push(`Waiter ${item.waiter.username}`);
     }
 
-    if (totalPrice !== undefined) {
-      parts.push(`Total ${Number(totalPrice).toFixed(2)}`);
+    if (item.totalPrice !== undefined) {
+      parts.push(`Total ${Number(item.totalPrice).toFixed(2)}`);
     }
 
     return parts.join(' - ');
@@ -107,17 +181,9 @@ const buildRelationLabel = (item: Row, field: EntityField): string => {
 };
 
 const getExtraColumns = (entityKey?: string): string[] => {
-  if (entityKey === 'order-items') {
-    return ['Unit Price', 'Item Total'];
-  }
-
-  if (entityKey === 'orders') {
-    return ['Total Price'];
-  }
-
-  if (entityKey === 'payments') {
-    return ['Order Total'];
-  }
+  if (entityKey === 'order-items') return ['Unit Price', 'Item Total'];
+  if (entityKey === 'orders') return ['Total Price'];
+  if (entityKey === 'payments') return ['Order Total'];
 
   return [];
 };
@@ -127,13 +193,8 @@ const getExtraColumnValue = (entityKey: string | undefined, row: Row, column: st
     const price = Number(row.menuItem?.price ?? 0);
     const quantity = Number(row.quantity ?? 0);
 
-    if (column === 'Unit Price') {
-      return price.toFixed(2);
-    }
-
-    if (column === 'Item Total') {
-      return (price * quantity).toFixed(2);
-    }
+    if (column === 'Unit Price') return price.toFixed(2);
+    if (column === 'Item Total') return (price * quantity).toFixed(2);
   }
 
   if (entityKey === 'orders' && column === 'Total Price') {
@@ -149,7 +210,6 @@ const getExtraColumnValue = (entityKey: string | undefined, row: Row, column: st
 
 function EntityCrudPage() {
   const { entityKey } = useParams();
-  const navigate = useNavigate();
   const entity = entityConfigByKey[entityKey as EntityName];
 
   const [formValues, setFormValues] = useState<FormValues>(() => (entity ? createInitialValues(entity) : {}));
@@ -173,12 +233,6 @@ function EntityCrudPage() {
     setRelationOptions({});
   }, [entityKey, entity]);
 
-  const setServerErrorPage = (apiError: ApiError) => {
-    if (apiError.isServerError) {
-      navigate('/error/500', { state: { message: apiError.message } });
-    }
-  };
-
   const withApi = async (action: () => Promise<void>, successMessage?: string) => {
     setIsBusy(true);
     setError('');
@@ -191,10 +245,11 @@ function EntityCrudPage() {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unexpected error';
-      setError(msg);
 
-      if (err instanceof ApiError) {
-        setServerErrorPage(err);
+      if (err instanceof ApiError && err.isServerError) {
+        setError('Nu se poate face operația. Posibil elementul este folosit în altă parte.');
+      } else {
+        setError(msg);
       }
     } finally {
       setIsBusy(false);
@@ -204,19 +259,20 @@ function EntityCrudPage() {
   const refreshAll = async () => {
     if (!entity) return;
 
-  const data = await api.getAll<any>(entity.endpoint);
+    const data = await api.getAll<any>(entity.endpoint);
+    const pageData = data as any;
 
-  const pageData = data as any;
+    const rawRows = Array.isArray(pageData)
+      ? pageData
+      : Array.isArray(pageData?.content)
+        ? pageData.content
+        : [];
 
-  const rowsData = Array.isArray(pageData)
-    ? pageData
-    : Array.isArray(pageData?.content)
-      ? pageData.content
-      : [];
+    const filteredRows = filterRowsByRole(entityKey, rawRows);
 
-  setRows(rowsData);
-  setStatus(`Loaded ${rowsData.length} ${entity.label.toLowerCase()}.`);
-   };
+    setRows(filteredRows);
+    setStatus(`Loaded ${filteredRows.length} ${entity.label.toLowerCase()}.`);
+  };
 
   useEffect(() => {
     refreshAll();
@@ -231,31 +287,40 @@ function EntityCrudPage() {
 
       for (const field of relationFields) {
         try {
-         // const data = await api.getAll<Row>(field.endpoint as string);
           const key = field.relationName ?? field.key;
+          const data = await api.getAll<any>(field.endpoint as string);
+          const pageData = data as any;
 
-         const data = await api.getAll<any>(field.endpoint as string);
+          const optionData = Array.isArray(pageData)
+            ? pageData
+            : Array.isArray(pageData?.content)
+              ? pageData.content
+              : [];
 
-         const pageData = data as any;
+          const loggedUser = getLoggedUser();
+          let filteredData = optionData;
 
-         const optionData = Array.isArray(pageData)
-           ? pageData
-           : Array.isArray(pageData?.content)
-             ? pageData.content
-             : [];
+          if (loggedUser?.role === 'WAITER') {
+            if (field.relationName === 'table' || field.key === 'table') {
+              filteredData = optionData.filter((table: Row) => table.waiter?.id === loggedUser.id);
+            }
 
-         const opts = optionData.map((item: Row) => ({
-           id: Number(item.id),
-           label: buildRelationLabel(item, field),
-         }));
+            if (field.relationName === 'order' || field.key === 'order') {
+              filteredData = optionData.filter((order: Row) => order.waiter?.id === loggedUser.id);
+            }
+          }
+
+          const opts = filteredData.map((item: Row) => ({
+            id: Number(item.id),
+            label: buildRelationLabel(item, field),
+          }));
 
           setRelationOptions((prev) => ({
             ...prev,
             [key]: opts,
           }));
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Could not load relation options';
-          setError(msg);
+        } catch {
+          setError('Could not load relation options.');
         }
       }
     };
@@ -265,6 +330,10 @@ function EntityCrudPage() {
 
   if (!entity) {
     return <Navigate to="/404" replace />;
+  }
+
+  if (!canAccessEntity(entityKey ?? '')) {
+    return <Navigate to={getFirstEntityPath()} replace />;
   }
 
   const onChange = (key: string, value: string | boolean) => {
@@ -323,16 +392,14 @@ function EntityCrudPage() {
   const runCreateOrUpdate = async (mode: 'create' | 'update') => {
     const validation = validateEntityForm(entity, formValues);
 
-    if (mode === 'update') {
-      if (!editingId || editingId <= 0) {
-        validation._edit = 'Selecteaza un element din tabel pentru a edita.';
-      }
+    if (mode === 'update' && (!editingId || editingId <= 0)) {
+      validation._edit = 'Selecteaza un element din tabel pentru a edita.';
     }
 
     setFormErrors(validation);
 
     if (Object.keys(validation).length > 0) {
-      setError('Date invalide. Corecteaza campurile marcate. ✍️');
+      setError('Date invalide. Corecteaza campurile marcate.');
       return;
     }
 
@@ -358,6 +425,12 @@ function EntityCrudPage() {
       return;
     }
 
+    const confirmed = window.confirm(
+      `Sigur vrei sa stergi acest element? ID: ${targetId}`
+    );
+
+    if (!confirmed) return;
+
     await withApi(async () => {
       await api.remove(entity.endpoint, targetId);
       await refreshAll();
@@ -372,7 +445,15 @@ function EntityCrudPage() {
     <main className="content">
       <div className="panel header-panel">
         <h2 className="brand">🥐 La Petite Table — {entity.label}</h2>
-        <p className="lead">Manage {entity.label.toLowerCase()} with style — beautiful, simple, Parisian. 🇫🇷</p>
+        <p className="lead">
+          {entityKey === 'orders'
+            ? 'Creeaza si gestioneaza comenzile.'
+            : entityKey === 'order-items'
+              ? 'Adauga produse in comenzile deschise.'
+              : entityKey === 'payments'
+                ? 'Gestioneaza platile comenzilor.'
+                : `Manage ${entity.label.toLowerCase()}.`}
+        </p>
       </div>
 
       <div className="panel">
@@ -386,38 +467,55 @@ function EntityCrudPage() {
                 {field.required ? ' *' : ''}
               </span>
 
-              {field.type === 'boolean' ? (
-                <input
-                  type="checkbox"
-                  checked={Boolean(formValues[field.key])}
-                  onChange={(event) => onChange(field.key, event.target.checked)}
+                {field.type === 'boolean' ? (
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formValues[field.key])}
+                      onChange={(event) => onChange(field.key, event.target.checked)}
+                    />
+                    <span className="toggle-slider"></span>
+                  </label>
+                ) : field.type === 'relationId' ? (
+                <Select
+                  className="fancy-select"
+                  classNamePrefix="fancy-select"
+                  placeholder="Selecteaza..."
+                  isClearable
+                  options={(relationOptions[field.relationName ?? field.key] ?? []).map((option) => ({
+                    value: String(option.id),
+                    label: option.label,
+                  }))}
+                  value={
+                    (relationOptions[field.relationName ?? field.key] ?? [])
+                      .map((option) => ({
+                        value: String(option.id),
+                        label: option.label,
+                      }))
+                      .find((option) => option.value === String(formValues[field.key] ?? '')) ?? null
+                  }
+                  onChange={(selected) => onChange(field.key, selected ? selected.value : '')}
                 />
-              ) : field.type === 'relationId' ? (
-                <select
-                  value={String(formValues[field.key] ?? '')}
-                  onChange={(event) => onChange(field.key, event.target.value)}
-                >
-                  <option value="">-- select --</option>
-
-                  {(relationOptions[field.relationName ?? field.key] ?? []).map((option) => (
-                    <option key={option.id} value={String(option.id)}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
               ) : field.type === 'select' ? (
-                <select
-                  value={String(formValues[field.key] ?? '')}
-                  onChange={(event) => onChange(field.key, event.target.value)}
-                >
-                  <option value="">-- select --</option>
-
-                  {(field.options ?? []).map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  className="fancy-select"
+                  classNamePrefix="fancy-select"
+                  placeholder="Selecteaza..."
+                  isClearable
+                  options={(field.options ?? []).map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                  value={
+                    (field.options ?? [])
+                      .map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))
+                      .find((option) => option.value === String(formValues[field.key] ?? '')) ?? null
+                  }
+                  onChange={(selected) => onChange(field.key, selected ? selected.value : '')}
+                />
               ) : (
                 <input
                   aria-invalid={Boolean(formErrors[field.key])}
@@ -457,8 +555,8 @@ function EntityCrudPage() {
         </div>
       </div>
 
-      <p className="status">{isBusy ? 'Working... ⏳' : status}</p>
-      {error ? <p className="error">{error}</p> : null}
+      <p className="status">{isBusy ? 'Working...' : status}</p>
+      {error ? <p className="error">⚠️ {error}</p> : null}
 
       <div className="panel">
         <h3>Items</h3>
@@ -525,10 +623,10 @@ function NotFoundPage() {
   return (
     <main className="content error-page">
       <div className="panel center">
-        <h2>404 — Oops! 🇫🇷</h2>
-        <p>Nu am gasit pagina. Poate lua un croissant si incercati din nou? 🥐</p>
+        <h2>404 — Pagina indisponibila</h2>
+        <p>Nu ai acces la aceasta zona sau pagina nu exista.</p>
         <p>
-          <a href="/">Mergi la dashboard</a>
+          <a href="/">Mergi la pagina principala</a>
         </p>
       </div>
     </main>
@@ -542,33 +640,29 @@ function ServerErrorPage() {
   return (
     <main className="content error-page">
       <div className="panel center">
-        <h2>500 — Oops! Ceva nu a mers. 💥</h2>
-        <p>{message ?? 'A aparut o eroare pe server. Ne cerem scuze — revenim imediat.'}</p>
-        <p>In timp ce rezolvam, incearca sa reimprospatezi sau contacteaza adminul. ☕️</p>
+        <h2>500 — Eroare server</h2>
+        <p>{message ?? 'A aparut o eroare pe server.'}</p>
         <p>
-          <a href="/">Mergi la dashboard</a>
+          <a href="/">Mergi la pagina principala</a>
         </p>
       </div>
     </main>
   );
 }
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const user = getLoggedUser();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 function App() {
-  const firstEntityPath = useMemo(() => `/entities/${entityConfigs[0].key}`, []);
-
-
-  const getLoggedUser = () => {
-    const fromLocalStorage = localStorage.getItem('loggedUser');
-    const fromSessionStorage = sessionStorage.getItem('loggedUser');
-
-    const rawUser = fromLocalStorage ?? fromSessionStorage;
-
-    if (!rawUser) {
-      return null;
-    }
-
-    return JSON.parse(rawUser);
-  };
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   const logout = () => {
     localStorage.removeItem('loggedUser');
@@ -576,65 +670,61 @@ function App() {
     window.location.href = '/login';
   };
 
-  function ProtectedRoute({ children }: { children: React.ReactNode }) {
-    const user = getLoggedUser();
-
-    if (!user) {
-      return <Navigate to="/login" replace />;
-    }
-
-    return children;
-  }
-
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <h1 className="brand">🥐 La Petite Table</h1>
-        <p className="sidebar-sub">Admin panel — Parisian UI</p>
+      {!isAuthPage ? (
+        <aside className="sidebar">
+          <h1 className="brand">🥐 La Petite Table</h1>
+          <p className="sidebar-sub">Restaurant panel</p>
 
-        {entityConfigs.map((entity) => (
-          <NavLink
-            key={entity.key}
-            to={`/entities/${entity.key}`}
-            className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
-          >
-            {entity.label}
-          </NavLink>
-        ))}
+          {entityConfigs
+            .filter((entity) => canAccessEntity(entity.key))
+            .map((entity) => (
+              <NavLink
+                key={entity.key}
+                to={`/entities/${entity.key}`}
+                className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+              >
+                {entity.label}
+              </NavLink>
+            ))}
 
-        <button type="button" className="tab" onClick={logout}>
-          Logout
-        </button>
+          <button type="button" className="tab" onClick={logout}>
+            Logout
+          </button>
 
-        <footer className="sidebar-footer">Made with ❤️ in Paris</footer>
-      </aside>
+          <footer className="sidebar-footer">La Petite Table</footer>
+        </aside>
+      ) : null}
 
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-       <Route
-         path="/"
-         element={
-           <ProtectedRoute>
-             <Navigate to={firstEntityPath} replace />
-           </ProtectedRoute>
-         }
-       />
 
-       <Route
-         path="/entities/:entityKey"
-         element={
-           <ProtectedRoute>
-             <EntityCrudPage />
-           </ProtectedRoute>
-         }
-       />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Navigate to={getFirstEntityPath()} replace />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/entities/:entityKey"
+          element={
+            <ProtectedRoute>
+              <EntityCrudPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/error/500" element={<ServerErrorPage />} />
         <Route path="/404" element={<NotFoundPage />} />
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
 
-      <footer className="global-footer">© La Petite Table — Admin</footer>
+      {!isAuthPage ? <footer className="global-footer">© La Petite Table</footer> : null}
     </div>
   );
 }

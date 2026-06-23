@@ -17,6 +17,10 @@ import com.restaurant.restaurantapp.model.MenuItem;
 import com.restaurant.restaurantapp.repository.MenuItemRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -126,6 +130,31 @@ class MenuItemServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> menuItemService.deleteMenuItem(1L));
         verify(menuItemRepository).existsById(1L);
         verify(menuItemRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void getAllMenuItemsPageableReturnsRepositoryResults() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<MenuItem> expectedPage = new PageImpl<>(List.of(menuItem), pageable, 1);
+        when(menuItemRepository.findAll(pageable)).thenReturn(expectedPage);
+
+        Page<MenuItem> result = menuItemService.getAllMenuItems(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Soup", result.getContent().get(0).getName());
+        verify(menuItemRepository).findAll(pageable);
+    }
+
+    @Test
+    void getMenuItemByIdRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> menuItemService.getMenuItemById(null));
+        verifyNoInteractions(menuItemRepository);
+    }
+
+    @Test
+    void deleteMenuItemRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> menuItemService.deleteMenuItem(0L));
+        verifyNoInteractions(menuItemRepository);
     }
 }
 

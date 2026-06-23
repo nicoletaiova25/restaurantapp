@@ -127,5 +127,17 @@ class RestaurantTableServiceTest {
         verify(restaurantTableRepository).existsById(1L);
         verify(restaurantTableRepository, never()).deleteById(anyLong());
     }
+
+    @Test
+    void getTableByIdRejectsZeroId() {
+        assertThrows(BadRequestException.class, () -> restaurantTableService.getTableById(0L));
+        verifyNoInteractions(restaurantTableRepository);
+    }
+
+    @Test
+    void deleteTableRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> restaurantTableService.deleteTable(-1L));
+        verifyNoInteractions(restaurantTableRepository);
+    }
 }
 

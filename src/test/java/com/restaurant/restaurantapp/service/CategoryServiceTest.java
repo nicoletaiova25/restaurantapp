@@ -16,6 +16,10 @@ import com.restaurant.restaurantapp.model.Category;
 import com.restaurant.restaurantapp.repository.CategoryRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -123,6 +127,24 @@ class CategoryServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> categoryService.deleteCategory(1L));
         verify(categoryRepository).existsById(1L);
         verify(categoryRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void getCategoryByIdRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> categoryService.getCategoryById(null));
+        verifyNoInteractions(categoryRepository);
+    }
+
+    @Test
+    void updateCategoryRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> categoryService.updateCategory(-1L, category("Updated")));
+        verifyNoInteractions(categoryRepository);
+    }
+
+    @Test
+    void deleteCategoryRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> categoryService.deleteCategory(0L));
+        verifyNoInteractions(categoryRepository);
     }
 }
 

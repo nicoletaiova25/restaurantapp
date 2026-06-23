@@ -16,7 +16,9 @@ import static org.mockito.Mockito.when;
 
 import com.restaurant.restaurantapp.exception.BadRequestException;
 import com.restaurant.restaurantapp.exception.ResourceNotFoundException;
+import com.restaurant.restaurantapp.model.Order;
 import com.restaurant.restaurantapp.model.Payment;
+import com.restaurant.restaurantapp.repository.OrderRepository;
 import com.restaurant.restaurantapp.repository.PaymentRepository;
 import java.util.List;
 import java.util.Optional;
@@ -33,17 +35,26 @@ class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
+    @Mock
+    private OrderRepository orderRepository;
+
     @InjectMocks
     private PaymentService paymentService;
 
+    private Order order;
     private Payment payment;
 
     @BeforeEach
     void setUp() {
-        payment = payment(
-                order(restaurantTable(8, 4, user("waiter", "pw", "WAITER")), user("waiter", "pw", "WAITER"), "OPEN", 25.0),
-                "CARD",
-                true);
+        order = order(
+                restaurantTable(8, 4, user("waiter", "pw", "WAITER")),
+                user("waiter", "pw", "WAITER"),
+                "OPEN",
+                25.0
+        );
+        order.setId(1L);
+
+        payment = payment(order, "CARD", true);
         payment.setId(1L);
     }
 
@@ -83,6 +94,7 @@ class PaymentServiceTest {
 
     @Test
     void createPaymentSavesPayload() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Payment created = paymentService.createPayment(payment);
@@ -99,13 +111,21 @@ class PaymentServiceTest {
 
     @Test
     void updatePaymentAppliesChanges() {
+        Order newOrder = order(
+                restaurantTable(10, 6, user("new", "pw", "WAITER")),
+                user("new", "pw", "WAITER"),
+                "PAID",
+                55.0
+        );
+        newOrder.setId(2L);
+
+        Payment updatedPayment = payment(newOrder, "CASH", false);
+
         when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+        when(orderRepository.findById(2L)).thenReturn(Optional.of(newOrder));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Payment result = paymentService.updatePayment(1L,
-                payment(order(restaurantTable(10, 6, user("new", "pw", "WAITER")), user("new", "pw", "WAITER"), "PAID", 55.0),
-                        "CASH",
-                        false));
+        Payment result = paymentService.updatePayment(1L, updatedPayment);
 
         assertEquals("CASH", result.getMethod());
         assertFalse(result.isPaid());
@@ -120,7 +140,7 @@ class PaymentServiceTest {
 
     @Test
     void deletePaymentDeletesWhenPresent() {
-        when(paymentRepository.existsById(1L)).thenReturn(true);
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
 
         paymentService.deletePayment(1L);
 
@@ -129,10 +149,104 @@ class PaymentServiceTest {
 
     @Test
     void deletePaymentThrowsWhenMissing() {
-        when(paymentRepository.existsById(1L)).thenReturn(false);
+        when(paymentRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> paymentService.deletePayment(1L));
-        verify(paymentRepository).existsById(1L);
+        verify(paymentRepository).findById(1L);
         verify(paymentRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void createPaymentValidatesMethod() {
+        Payment invalidPayment = payment(order, "BITCOIN", false);
+
+        assertThrows(BadRequestException.class, () -> paymentService.createPayment(invalidPayment));
+        verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void createPaymentRejectsBlankMethod() {
+        Payment invalidPayment = payment(order, "  ", false);
+
+        assertThrows(BadRequestException.class, () -> paymentService.createPayment(invalidPayment));
+    }
+
+    @Test
+    void createPaymentRejectsNullMethod() {
+        Payment invalidPayment = payment(order, null, false);
+
+        assertThrows(BadRequestException.class, () -> paymentService.createPayment(invalidPayment));
+    }
+
+    @Test
+    void createPaymentRejectsNullOrder() {
+        Payment invalidPayment = new Payment();
+        invalidPayment.setMethod("CARD");
+        invalidPayment.setOrder(null);
+
+        assertThrows(BadRequestException.class, () -> paymentService.createPayment(invalidPayment));
+    }
+
+    @Test
+    void createPaymentSetsOrderStatusToPaidWhenPaid() {
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        paymentService.createPayment(payment);
+
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void updatePaymentNormalizesMethod() {
+        Payment updated = payment(order, "cash", false);
+
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Payment result = paymentService.updatePayment(1L, updated);
+
+        assertEquals("CASH", result.getMethod());
+    }
+
+    @Test
+    void updatePaymentSetsStatusOpenWhenNotPaid() {
+        order.setStatus("PAID");
+
+        Payment updated = payment(order, "CARD", false);
+
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        paymentService.updatePayment(1L, updated);
+
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void deletePaymentResetsOrderStatusToOpen() {
+        order.setStatus("PAID");
+        payment.setOrder(order);
+
+        when(paymentRepository.findById(1L)).thenReturn(Optional.of(payment));
+
+        paymentService.deletePayment(1L);
+
+        verify(orderRepository).save(order);
+        verify(paymentRepository).deleteById(1L);
+    }
+
+    @Test
+    void getPaymentByIdRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> paymentService.getPaymentById(null));
+        verifyNoInteractions(paymentRepository);
+    }
+
+    @Test
+    void deletePaymentRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> paymentService.deletePayment(0L));
+        verifyNoInteractions(paymentRepository);
     }
 }

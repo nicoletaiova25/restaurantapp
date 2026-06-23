@@ -1,10 +1,6 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/restaurant
-    username: postgres
-    password: postgres
+  application:
+    name: restaurant-service
 
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  config:
+    import: optional:configserver:http://localhost:8888

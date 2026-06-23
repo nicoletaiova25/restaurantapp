@@ -18,6 +18,10 @@ import com.restaurant.restaurantapp.model.User;
 import com.restaurant.restaurantapp.repository.UserRepository;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -169,5 +173,55 @@ class UserServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> userService.deleteUser(1L));
         verify(userRepository).existsById(1L);
         verify(userRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void getAllUsersPageableReturnsRepositoryResults() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<User> expectedPage = new PageImpl<>(List.of(existingUser), pageable, 1);
+        when(userRepository.findAll(pageable)).thenReturn(expectedPage);
+
+        Page<User> result = userService.getAllUsers(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(existingUser.getUsername(), result.getContent().get(0).getUsername());
+        verify(userRepository).findAll(pageable);
+    }
+
+    @Test
+    void getUserByIdRejectsNullId() {
+        assertThrows(BadRequestException.class, () -> userService.getUserById(null));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getUserByIdRejectsZeroId() {
+        assertThrows(BadRequestException.class, () -> userService.getUserById(0L));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void deleteUserRejectsInvalidId() {
+        assertThrows(BadRequestException.class, () -> userService.deleteUser(-5L));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void getUserByUsernameRejectsNullUsername() {
+        assertThrows(BadRequestException.class, () -> userService.getUserByUsername(null));
+        verifyNoInteractions(userRepository);
+    }
+
+    @Test
+    void updateUserPreservesUsernameIfNewUsernameIsSame() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User updated = user("admin", "new-secret", "MANAGER");
+        User result = userService.updateUser(1L, updated);
+
+        assertEquals("admin", result.getUsername());
+        verify(userRepository).save(existingUser);
+        verify(userRepository, never()).existsByUsername("admin");
     }
 }

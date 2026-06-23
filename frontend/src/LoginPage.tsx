@@ -1,6 +1,5 @@
 import { useState } from 'react';
-//import { useNavigate } from 'react-router-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 type LoggedUser = {
   id: number;
@@ -9,8 +8,6 @@ type LoggedUser = {
 };
 
 function LoginPage() {
-  const navigate = useNavigate();
-
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -24,7 +21,7 @@ function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('http://localhost:8081/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -38,13 +35,16 @@ function LoginPage() {
 
       const user: LoggedUser = await response.json();
 
+      localStorage.removeItem('loggedUser');
+      sessionStorage.removeItem('loggedUser');
+
       if (rememberMe) {
         localStorage.setItem('loggedUser', JSON.stringify(user));
       } else {
         sessionStorage.setItem('loggedUser', JSON.stringify(user));
       }
 
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Eroare la login.');
     } finally {
@@ -92,10 +92,10 @@ function LoginPage() {
         <button type="submit" disabled={isBusy}>
           {isBusy ? 'Logging in...' : 'Login'}
         </button>
+
         <p>
           Nu ai cont? <Link to="/register">Register</Link>
         </p>
-
       </form>
     </main>
   );

@@ -69,28 +69,16 @@ const filterRowsByRole = (entityKey: string | undefined, rows: Row[]) => {
 
   if (!user) return [];
 
-  if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-    return rows;
-  }
+  if (user.role === 'ADMIN' || user.role === 'MANAGER') return rows;
 
   if (user.role === 'WAITER') {
-    if (entityKey === 'orders') {
-      return rows.filter((order) => order.waiter?.id === user.id);
-    }
-
-    if (entityKey === 'order-items') {
-      return rows.filter((item) => item.order?.waiter?.id === user.id);
-    }
-
-    if (entityKey === 'payments') {
-      return rows.filter((payment) => payment.order?.waiter?.id === user.id);
-    }
+    if (entityKey === 'orders') return rows.filter((order) => order.waiter?.id === user.id);
+    if (entityKey === 'order-items') return rows.filter((item) => item.order?.waiter?.id === user.id);
+    if (entityKey === 'payments') return rows.filter((payment) => payment.order?.waiter?.id === user.id);
   }
 
   if (user.role === 'BARTENDER') {
-    if (entityKey === 'orders' || entityKey === 'order-items') {
-      return rows;
-    }
+    if (entityKey === 'orders' || entityKey === 'order-items') return rows;
   }
 
   return [];
@@ -158,24 +146,14 @@ const buildRelationLabel = (item: Row, field: EntityField): string => {
   if (field.relationName === 'order') {
     const parts = [`Order #${item.id}`];
 
-    if (item.table?.tableNumber !== undefined) {
-      parts.push(`Table ${item.table.tableNumber}`);
-    }
-
-    if (item.waiter?.username !== undefined) {
-      parts.push(`Waiter ${item.waiter.username}`);
-    }
-
-    if (item.totalPrice !== undefined) {
-      parts.push(`Total ${Number(item.totalPrice).toFixed(2)}`);
-    }
+    if (item.table?.tableNumber !== undefined) parts.push(`Table ${item.table.tableNumber}`);
+    if (item.waiter?.username !== undefined) parts.push(`Waiter ${item.waiter.username}`);
+    if (item.totalPrice !== undefined) parts.push(`Total ${Number(item.totalPrice).toFixed(2)}`);
 
     return parts.join(' - ');
   }
 
-  if (labelField && item[labelField] !== undefined) {
-    return String(item[labelField]);
-  }
+  if (labelField && item[labelField] !== undefined) return String(item[labelField]);
 
   return String(item.name ?? item.username ?? item.tableNumber ?? item.id);
 };
@@ -207,6 +185,70 @@ const getExtraColumnValue = (entityKey: string | undefined, row: Row, column: st
 
   return '';
 };
+
+function AIRecommendationsPage() {
+  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const loadRecommendations = async () => {
+    setIsBusy(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:8080/api/ai/recommendations');
+
+      if (!response.ok) {
+        throw new Error('Could not load AI recommendations.');
+      }
+
+      const data: string[] = await response.json();
+      setRecommendations(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error.');
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRecommendations();
+  }, []);
+
+  return (
+    <main className="content">
+      <div className="panel header-panel">
+        <h2 className="brand">🤖 AI Recommendations</h2>
+        <p className="lead">
+          AI Runtime Agent care analizează meniul aplicației și generează recomandări automate pentru utilizatori.
+        </p>
+      </div>
+
+      <div className="panel">
+        <h3>Smart Suggestions</h3>
+
+        <button type="button" onClick={loadRecommendations} disabled={isBusy}>
+          {isBusy ? 'Generating...' : '🔄 Generate recommendations'}
+        </button>
+
+        {error ? <p className="error">⚠️ {error}</p> : null}
+
+        <div className="recommendations-grid">
+          {recommendations.map((item, index) => (
+            <div key={index} className="recommendation-card">
+              <span className="recommendation-icon">✨</span>
+              <span>{item}</span>
+            </div>
+          ))}
+
+          {!isBusy && recommendations.length === 0 ? (
+            <p>No recommendations yet.</p>
+          ) : null}
+        </div>
+      </div>
+    </main>
+  );
+}
 
 function EntityCrudPage() {
   const { entityKey } = useParams();
@@ -425,9 +467,7 @@ function EntityCrudPage() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Sigur vrei sa stergi acest element? ID: ${targetId}`
-    );
+    const confirmed = window.confirm(`Sigur vrei sa stergi acest element? ID: ${targetId}`);
 
     if (!confirmed) return;
 
@@ -467,16 +507,16 @@ function EntityCrudPage() {
                 {field.required ? ' *' : ''}
               </span>
 
-                {field.type === 'boolean' ? (
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(formValues[field.key])}
-                      onChange={(event) => onChange(field.key, event.target.checked)}
-                    />
-                    <span className="toggle-slider"></span>
-                  </label>
-                ) : field.type === 'relationId' ? (
+              {field.type === 'boolean' ? (
+                <div className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(formValues[field.key])}
+                    onChange={(event) => onChange(field.key, event.target.checked)}
+                  />
+                  <span className="toggle-slider"></span>
+                </div>
+              ) : field.type === 'relationId' ? (
                 <Select
                   className="fancy-select"
                   classNamePrefix="fancy-select"
@@ -689,6 +729,13 @@ function App() {
               </NavLink>
             ))}
 
+          <NavLink
+            to="/ai-recommendations"
+            className={({ isActive }) => (isActive ? 'tab active' : 'tab')}
+          >
+            🤖 AI Recommendations
+          </NavLink>
+
           <button type="button" className="tab" onClick={logout}>
             Logout
           </button>
@@ -715,6 +762,15 @@ function App() {
           element={
             <ProtectedRoute>
               <EntityCrudPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ai-recommendations"
+          element={
+            <ProtectedRoute>
+              <AIRecommendationsPage />
             </ProtectedRoute>
           }
         />

@@ -693,3 +693,37 @@ textarea:focus {
 .toggle-switch:hover .toggle-slider {
   transform: scale(1.03);
 }
+
+.recommendations-grid {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, #eff6ff);
+  border: 1px solid #dbeafe;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  font-weight: 800;
+  color: #071a3d;
+  transition: all 0.2s ease;
+}
+
+.recommendation-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 45px rgba(37, 99, 235, 0.15);
+}
+
+.recommendation-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #facc15, #fb923c);
+}

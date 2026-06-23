@@ -16,7 +16,8 @@ The project includes a React frontend, a Spring Boot backend, database persisten
 
 ---
 
-# Project Description
+<details>
+<summary><h2>📋 Project Description</h2></summary>
 
 The main purpose of the application is to manage restaurant operations in a simple and organized way.
 
@@ -28,9 +29,12 @@ The system supports role-based access:
 
 Tables can be assigned to waiters, and waiters can see only the orders related to their assigned tables.
 
+</details>
+
 ---
 
-# Architecture
+<details>
+<summary><h2>🏗️ Architecture</h2></summary>
 
 The application started as a Spring Boot monolithic application and was later extended with microservice-related components.
 
@@ -65,13 +69,16 @@ Backend Services
 Database
 ```
 
+</details>
+
 ---
 
-# ER Diagram
+<details>
+<summary><h2>🗺️ ER Diagram</h2></summary>
 
 The diagram below documents the current entity relationships used in this project.
 
-## Mermaid Plugin (IntelliJ)
+### Mermaid Plugin (IntelliJ)
 
 To render Mermaid diagrams directly in IntelliJ IDEA Community Edition:
 
@@ -142,35 +149,38 @@ erDiagram
     ORDERS ||--|| PAYMENT : paid_by
 ```
 
-## Notes
+### Notes
 
 * `Order` is mapped to table name `orders` in code.
 * `Payment` is a one-to-one relation with `Order`.
 * `OrderItem` acts as the line-item bridge between `Order` and `MenuItem`.
 
+</details>
+
 ---
 
-# Main Features
+<details>
+<summary><h2>✨ Main Features</h2></summary>
 
-## Users and Roles
+### Users and Roles
 
 * user creation;
 * role management;
 * login;
 * role-based access control.
 
-## Menu Management
+### Menu Management
 
 * categories CRUD;
 * menu items CRUD;
 * product price management.
 
-## Restaurant Tables
+### Restaurant Tables
 
 * table CRUD;
 * assigning waiters to tables.
 
-## Orders
+### Orders
 
 * create orders;
 * assign waiter and table;
@@ -178,14 +188,14 @@ erDiagram
 * automatic total price calculation;
 * order status management.
 
-## Payments
+### Payments
 
 * payment creation;
 * CASH / CARD payment method;
 * paid / unpaid status;
 * automatic update of order status.
 
-## AI Recommendations
+### AI Recommendations
 
 The application includes an AI Runtime module that generates recommendations based on menu data.
 
@@ -195,9 +205,12 @@ Endpoint:
 GET /api/ai/recommendations
 ```
 
+</details>
+
 ---
 
-# Frontend
+<details>
+<summary><h2>💻 Frontend</h2></summary>
 
 A React + TypeScript frontend is available in:
 
@@ -222,9 +235,12 @@ Frontend URL:
 http://localhost:5173
 ```
 
+</details>
+
 ---
 
-# Backend
+<details>
+<summary><h2>⚙️ Backend</h2></summary>
 
 The backend is implemented using Spring Boot.
 
@@ -244,11 +260,14 @@ Backend URL:
 http://localhost:8080
 ```
 
+</details>
+
 ---
 
-# API Documentation
+<details>
+<summary><h2>📡 API Documentation</h2></summary>
 
-## Users
+### Users
 
 ```http
 GET    /api/users
@@ -258,7 +277,7 @@ PUT    /api/users/{id}
 DELETE /api/users/{id}
 ```
 
-## Categories
+### Categories
 
 ```http
 GET    /api/categories
@@ -268,7 +287,7 @@ PUT    /api/categories/{id}
 DELETE /api/categories/{id}
 ```
 
-## Menu Items
+### Menu Items
 
 ```http
 GET    /api/menu-items
@@ -278,7 +297,7 @@ PUT    /api/menu-items/{id}
 DELETE /api/menu-items/{id}
 ```
 
-## Restaurant Tables
+### Restaurant Tables
 
 ```http
 GET    /api/restaurant-tables
@@ -288,7 +307,7 @@ PUT    /api/restaurant-tables/{id}
 DELETE /api/restaurant-tables/{id}
 ```
 
-## Orders
+### Orders
 
 ```http
 GET    /api/orders
@@ -298,7 +317,7 @@ PUT    /api/orders/{id}
 DELETE /api/orders/{id}
 ```
 
-## Order Items
+### Order Items
 
 ```http
 GET    /api/order-items
@@ -308,7 +327,7 @@ PUT    /api/order-items/{id}
 DELETE /api/order-items/{id}
 ```
 
-## Payments
+### Payments
 
 ```http
 GET    /api/payments
@@ -318,17 +337,20 @@ PUT    /api/payments/{id}
 DELETE /api/payments/{id}
 ```
 
-## AI Recommendations
+### AI Recommendations
 
 ```http
 GET /api/ai/recommendations
 ```
 
+</details>
+
 ---
 
-# Complete Setup Guide
+<details>
+<summary><h2>🚀 Getting Started (Setup, Local Run & Dev Flow)</h2></summary>
 
-## Status
+### Status
 
 * Backend running on port 8080
 * Frontend running on port 5173
@@ -339,18 +361,16 @@ GET /api/ai/recommendations
 * Monitoring configured
 * AI Recommendations implemented
 
----
+### How to Start Locally
 
-# How to Start Locally
-
-## Terminal 1 - Backend
+**Terminal 1 - Backend**
 
 ```powershell
 cd C:\Users\Admin\Desktop\restaurantapp
 .\mvnw.cmd spring-boot:run
 ```
 
-## Terminal 2 - Frontend
+**Terminal 2 - Frontend**
 
 ```powershell
 cd C:\Users\Admin\Desktop\restaurantapp\frontend
@@ -358,7 +378,7 @@ npm install
 npm run dev
 ```
 
-## Browser
+**Browser**
 
 Open:
 
@@ -366,9 +386,7 @@ Open:
 http://localhost:5173
 ```
 
----
-
-# Local Development Flow
+### Local Development Flow
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -394,9 +412,12 @@ http://localhost:5173
    Database
 ```
 
+</details>
+
 ---
 
-# Environment Variables
+<details>
+<summary><h2>🔐 Environment Variables</h2></summary>
 
 Environment-specific values are stored outside the source code whenever possible.
 
@@ -436,13 +457,16 @@ spring.datasource.password=
 
 Separate Spring profiles are used for development and testing environments.
 
+</details>
+
 ---
 
-# Testing
+<details>
+<summary><h2>🧪 Testing</h2></summary>
 
 The project includes both unit tests and integration tests.
 
-## Unit Tests
+### Unit Tests
 
 Technologies:
 
@@ -451,7 +475,7 @@ Technologies:
 
 The service layer is tested with mocked repositories.
 
-## Integration Tests
+### Integration Tests
 
 Technologies:
 
@@ -467,7 +491,7 @@ Integration scenarios:
 * creating and updating payments;
 * updating order status based on payments.
 
-## Coverage
+### Coverage
 
 JaCoCo is used for code coverage.
 
@@ -479,7 +503,7 @@ Coverage report:
 target/site/jacoco/index.html
 ```
 
-## Test Database Configuration
+### Test Database Configuration
 
 Tests run using the `test` profile and H2 in-memory database.
 
@@ -493,9 +517,12 @@ spring.datasource.username=sa
 spring.datasource.password=
 ```
 
+</details>
+
 ---
 
-# CI/CD Pipeline
+<details>
+<summary><h2>🔁 CI/CD Pipeline</h2></summary>
 
 GitHub Actions is used for CI/CD.
 
@@ -509,9 +536,14 @@ The pipeline includes:
 
 The workflow runs automatically on push and pull requests.
 
+</details>
+
 ---
 
-# Microservices Architecture
+<details>
+<summary><h2>🧩 Infrastructure & Microservices</h2></summary>
+
+### Microservices Architecture
 
 The optional microservices part was implemented using:
 
@@ -522,29 +554,17 @@ The optional microservices part was implemented using:
 * Reporting Service
 * Main Restaurant Service
 
-## Config Server
+**Config Server** — Used for centralized configuration.
 
-Used for centralized configuration.
+**Eureka Server** — Used for service discovery.
 
-## Eureka Server
+**API Gateway** — Used for centralized routing, request filtering and gateway access.
 
-Used for service discovery.
+**User Service** — Used for authentication and user-related responsibilities.
 
-## API Gateway
+**Reporting Service** — Used for reporting and inter-service communication demonstrations.
 
-Used for centralized routing, request filtering and gateway access.
-
-## User Service
-
-Used for authentication and user-related responsibilities.
-
-## Reporting Service
-
-Used for reporting and inter-service communication demonstrations.
-
----
-
-# Service Discovery
+### Service Discovery
 
 Eureka is used as a service registry.
 
@@ -556,9 +576,7 @@ Eureka Dashboard:
 http://localhost:8761
 ```
 
----
-
-# API Gateway
+### API Gateway
 
 API Gateway provides:
 
@@ -573,19 +591,13 @@ Gateway URL:
 http://localhost:8085
 ```
 
----
-
-# Load Balancing
+### Load Balancing
 
 Spring Cloud LoadBalancer was used to demonstrate multiple instances of a service.
 
 The application can run multiple instances of the same service and route requests between them through service discovery.
 
----
-
-# Design Pattern
-
-## Strangler Fig Pattern
+### Design Pattern — Strangler Fig
 
 The project uses the Strangler Fig Pattern as a migration approach from a monolithic application to a microservice-based architecture.
 
@@ -606,9 +618,7 @@ Benefits:
 * independent service evolution;
 * better scalability.
 
----
-
-# NoSQL and Caching
+### NoSQL and Caching
 
 Redis is used as a NoSQL / caching infrastructure component.
 
@@ -621,9 +631,7 @@ Benefits:
 * improved scalability;
 * support for infrastructure features such as rate limiting.
 
----
-
-# Monitoring
+### Monitoring
 
 Monitoring was implemented using:
 
@@ -650,9 +658,7 @@ Metrics monitored:
 * HTTP requests
 * application health
 
----
-
-# Docker Deployment
+### Docker Deployment
 
 The project can be started using Docker Compose.
 
@@ -669,13 +675,7 @@ Dockerized / infrastructure services:
 * backend containers
 * frontend container
 
----
-
-# Deployment
-
-The application can be deployed and executed using Docker Compose.
-
-## Docker Deployment
+### Deployment
 
 Start all services:
 
@@ -702,9 +702,7 @@ Available services:
 
 The Docker Compose configuration allows all components of the application to be started with a single command.
 
----
-
-# Branch Strategy
+### Branch Strategy
 
 Git was used during the entire development process.
 
@@ -715,17 +713,20 @@ Repository structure:
 
 GitHub Actions workflows are executed automatically on push and pull request events.
 
+</details>
+
 ---
 
-# AI Agents - Development
+<details>
+<summary><h2>🤖 AI Agents — Development & Runtime</h2></summary>
 
-## GitHub Copilot for Pair Programming
+### GitHub Copilot for Pair Programming
 
 GitHub Copilot was used during the development process as an AI-assisted programming tool.
 
 It provided real-time code suggestions for backend and frontend implementation, helping reduce development time and improve productivity.
 
-## Automated Code Review for Pull Requests
+### Automated Code Review for Pull Requests
 
 GitHub Copilot was also used for analyzing Pull Requests and suggesting improvements.
 
@@ -737,7 +738,7 @@ Examples:
 * checking code consistency;
 * identifying possible problems before merging.
 
-## Automatic Documentation Generation
+### Automatic Documentation Generation
 
 AI-based tools were used to generate and improve project documentation, including:
 
@@ -746,7 +747,7 @@ AI-based tools were used to generate and improve project documentation, includin
 * CI/CD pipeline explanation;
 * Docker and GitHub Actions configuration explanations.
 
-## Benefits
+### Benefits
 
 * reduced development time;
 * increased productivity;
@@ -755,9 +756,7 @@ AI-based tools were used to generate and improve project documentation, includin
 * automated documentation support;
 * support for code review and refactoring.
 
----
-
-# AI Agents - Runtime
+### AI Runtime — Recommendations
 
 The application includes an AI Runtime feature through the AI Recommendations module.
 
@@ -771,35 +770,42 @@ The module analyzes menu items and generates smart recommendations that can help
 
 This feature demonstrates AI integration at runtime inside the application.
 
+</details>
+
 ---
 
-# Screenshots
-## LOGIN PAGE
+<details>
+<summary><h2>📸 Screenshots</h2></summary>
+
+### LOGIN PAGE
   <img width="1853" height="907" alt="image" src="https://github.com/user-attachments/assets/30d92f75-33ef-4df9-a7bc-fdc931b45ef8" />
   
-## REGISTER PAGE
+### REGISTER PAGE
 <img width="1805" height="863" alt="image" src="https://github.com/user-attachments/assets/ade035bb-fc00-4a3d-9abe-dd4ed2c820b7" />
 
-## DASHBOARD VIEW
+### DASHBOARD VIEW
 <img width="1919" height="896" alt="image" src="https://github.com/user-attachments/assets/c7ad90f7-1c62-465a-a557-417b50081017" />
 
-## PAYMENT PAGE
+### PAYMENT PAGE
 <img width="1887" height="891" alt="image" src="https://github.com/user-attachments/assets/4636dee4-da2e-4733-a76e-40a87839098a" />
 
-## AI RECOMMENDATION
+### AI RECOMMENDATION
 <img width="1893" height="898" alt="image" src="https://github.com/user-attachments/assets/5f457ca8-ae69-4f89-8737-95e0e7843306" />
 
-## GRAFANA
+### GRAFANA
 <img width="1289" height="768" alt="image" src="https://github.com/user-attachments/assets/7a340a9c-2631-4d34-ad8b-59cd52da4a77" />
 
-## JACOCO
+### JACOCO
 <img width="1382" height="301" alt="image" src="https://github.com/user-attachments/assets/2c3baa79-195e-445f-b767-22d63962fc7c" />
+
+</details>
 
 ---
 
-# Implemented Requirements
+<details>
+<summary><h2>✅ Implemented Requirements</h2></summary>
 
-## Mandatory Requirements
+### Mandatory Requirements
 
 * Model de date
 * CRUD operations
@@ -810,7 +816,7 @@ This feature demonstrates AI integration at runtime inside the application.
 * Pagination and sorting
 * Spring Security
 
-## Optional Requirements
+### Optional Requirements
 
 * Centralized configuration
 * Service discovery
@@ -820,21 +826,24 @@ This feature demonstrates AI integration at runtime inside the application.
 * Resilience
 * Design patterns
 
-## Bonus
+### Bonus
 
 * AI in development
 * AI runtime integration
 * CI/CD pipeline
 * Docker deployment
 
+</details>
+
 ---
 
-# Team Members and Contributions
+<details>
+<summary><h2>👥 Team Members and Contributions</h2></summary>
 
-## 405 - BDTS
-## Cimpeanu Ana-Maria
-## Iova Nicoleta-Carmen
-## Tismanaru Artemis-Constantina
+### 405 - BDTS
+### Cimpeanu Ana-Maria
+### Iova Nicoleta-Carmen
+### Tismanaru Artemis-Constantina
 
 Contributions:
 
@@ -849,6 +858,8 @@ Contributions:
 * CI/CD configuration;
 * AI features;
 * documentation.
+
+</details>
 
 ---
 

@@ -701,26 +701,103 @@ This feature demonstrates AI integration at runtime inside the application.
 
 ---
 
-# Screenshots
+# Deployment
 
-Add screenshots for:
+The application can be deployed and executed using Docker Compose.
 
-* login page;
-* main dashboard;
-* users page;
-* orders page;
-* payments page;
-* AI recommendations page;
-* Grafana dashboard;
-* GitHub Actions pipeline.
+## Docker Deployment
 
-Example format:
+Start all services:
 
-```markdown
-![Login Page](screenshots/login.png)
-![Orders Page](screenshots/orders.png)
-![AI Recommendations](screenshots/ai-recommendations.png)
+```powershell
+docker compose up -d
 ```
+
+Stop all services:
+
+```powershell
+docker compose down
+```
+
+Available services:
+
+| Service          | URL                   |
+| ---------------- | --------------------- |
+| Frontend         | http://localhost:5173 |
+| Backend API      | http://localhost:8080 |
+| API Gateway      | http://localhost:8085 |
+| Eureka Dashboard | http://localhost:8761 |
+| Prometheus       | http://localhost:9090 |
+| Grafana          | http://localhost:3000 |
+
+The Docker Compose configuration allows all components of the application to be started with a single command.
+
+---
+
+# Environment Variables
+
+The project supports environment-specific configurations.
+
+Examples of configurable properties:
+
+* database URL
+* database username
+* database password
+* server ports
+* Redis configuration
+* Prometheus configuration
+* Grafana configuration
+
+For testing purposes, a dedicated H2 in-memory database configuration is used.
+
+Example:
+
+```properties
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+```
+
+Separate Spring profiles are used for development and testing environments.
+
+---
+
+# Branch Strategy
+
+Git was used during the entire development process.
+
+Repository structure:
+
+* master – main branch
+* feature branches used during development and integration
+
+GitHub Actions workflows are executed automatically on push and pull request events.
+
+---
+
+# Screenshots
+## LOGIN PAGE
+  <img width="1853" height="907" alt="image" src="https://github.com/user-attachments/assets/30d92f75-33ef-4df9-a7bc-fdc931b45ef8" />
+  
+## REGISTER PAGE
+<img width="1805" height="863" alt="image" src="https://github.com/user-attachments/assets/ade035bb-fc00-4a3d-9abe-dd4ed2c820b7" />
+
+## DASHBOARD VIEW
+<img width="1919" height="896" alt="image" src="https://github.com/user-attachments/assets/c7ad90f7-1c62-465a-a557-417b50081017" />
+
+## PAYMENT PAGE
+<img width="1887" height="891" alt="image" src="https://github.com/user-attachments/assets/4636dee4-da2e-4733-a76e-40a87839098a" />
+
+## AI RECOMMENDATION
+<img width="1893" height="898" alt="image" src="https://github.com/user-attachments/assets/5f457ca8-ae69-4f89-8737-95e0e7843306" />
+
+## GRAFANA
+<img width="1289" height="768" alt="image" src="https://github.com/user-attachments/assets/7a340a9c-2631-4d34-ad8b-59cd52da4a77" />
+
+## JACOCO
+<img width="1382" height="301" alt="image" src="https://github.com/user-attachments/assets/2c3baa79-195e-445f-b767-22d63962fc7c" />
 
 ---
 

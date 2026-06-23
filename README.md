@@ -396,104 +396,45 @@ http://localhost:5173
 
 ---
 
-# Microservices Architecture
+# Environment Variables
 
-The optional microservices part was implemented using:
+Environment-specific values are stored outside the source code whenever possible.
 
-* Config Server
-* Eureka Server
-* API Gateway
-* User Service
-* Reporting Service
-* Main Restaurant Service
+Examples:
 
-## Config Server
+* database URL;
+* database username;
+* database password;
+* service ports;
+* Redis configuration.
 
-Used for centralized configuration.
+For tests, H2 is configured separately through the test profile.
 
-## Eureka Server
+The project supports environment-specific configurations.
 
-Used for service discovery.
+Examples of configurable properties:
 
-## API Gateway
+* database URL
+* database username
+* database password
+* server ports
+* Redis configuration
+* Prometheus configuration
+* Grafana configuration
 
-Used for centralized routing, request filtering and gateway access.
+For testing purposes, a dedicated H2 in-memory database configuration is used.
 
-## User Service
+Example:
 
-Used for authentication and user-related responsibilities.
-
-## Reporting Service
-
-Used for reporting and inter-service communication demonstrations.
-
----
-
-# Service Discovery
-
-Eureka is used as a service registry.
-
-Services register automatically in Eureka and can be discovered by name.
-
-Eureka Dashboard:
-
-```text
-http://localhost:8761
+```properties
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
 ```
 
----
-
-# API Gateway
-
-API Gateway provides:
-
-* centralized routing;
-* request filtering;
-* response filtering;
-* integration with service discovery.
-
-Gateway URL:
-
-```text
-http://localhost:8085
-```
-
----
-
-# Load Balancing
-
-Spring Cloud LoadBalancer was used to demonstrate multiple instances of a service.
-
-The application can run multiple instances of the same service and route requests between them through service discovery.
-
----
-
-# Monitoring
-
-Monitoring was implemented using:
-
-* Spring Boot Actuator
-* Prometheus
-* Grafana
-
-Prometheus URL:
-
-```text
-http://localhost:9090
-```
-
-Grafana URL:
-
-```text
-http://localhost:3000
-```
-
-Metrics monitored:
-
-* JVM memory
-* CPU usage
-* HTTP requests
-* application health
+Separate Spring profiles are used for development and testing environments.
 
 ---
 
@@ -570,38 +511,75 @@ The workflow runs automatically on push and pull requests.
 
 ---
 
-# Docker Deployment
+# Microservices Architecture
 
-The project can be started using Docker Compose.
+The optional microservices part was implemented using:
 
-```powershell
-docker compose up -d
-```
+* Config Server
+* Eureka Server
+* API Gateway
+* User Service
+* Reporting Service
+* Main Restaurant Service
 
-Dockerized / infrastructure services:
+## Config Server
 
-* PostgreSQL
-* Redis
-* Prometheus
-* Grafana
-* backend containers
-* frontend container
+Used for centralized configuration.
+
+## Eureka Server
+
+Used for service discovery.
+
+## API Gateway
+
+Used for centralized routing, request filtering and gateway access.
+
+## User Service
+
+Used for authentication and user-related responsibilities.
+
+## Reporting Service
+
+Used for reporting and inter-service communication demonstrations.
 
 ---
 
-# Environment Variables
+# Service Discovery
 
-Environment-specific values are stored outside the source code whenever possible.
+Eureka is used as a service registry.
 
-Examples:
+Services register automatically in Eureka and can be discovered by name.
 
-* database URL;
-* database username;
-* database password;
-* service ports;
-* Redis configuration.
+Eureka Dashboard:
 
-For tests, H2 is configured separately through the test profile.
+```text
+http://localhost:8761
+```
+
+---
+
+# API Gateway
+
+API Gateway provides:
+
+* centralized routing;
+* request filtering;
+* response filtering;
+* integration with service discovery.
+
+Gateway URL:
+
+```text
+http://localhost:8085
+```
+
+---
+
+# Load Balancing
+
+Spring Cloud LoadBalancer was used to demonstrate multiple instances of a service.
+
+The application can run multiple instances of the same service and route requests between them through service discovery.
 
 ---
 
@@ -642,6 +620,100 @@ Benefits:
 * reduced database load;
 * improved scalability;
 * support for infrastructure features such as rate limiting.
+
+---
+
+# Monitoring
+
+Monitoring was implemented using:
+
+* Spring Boot Actuator
+* Prometheus
+* Grafana
+
+Prometheus URL:
+
+```text
+http://localhost:9090
+```
+
+Grafana URL:
+
+```text
+http://localhost:3000
+```
+
+Metrics monitored:
+
+* JVM memory
+* CPU usage
+* HTTP requests
+* application health
+
+---
+
+# Docker Deployment
+
+The project can be started using Docker Compose.
+
+```powershell
+docker compose up -d
+```
+
+Dockerized / infrastructure services:
+
+* PostgreSQL
+* Redis
+* Prometheus
+* Grafana
+* backend containers
+* frontend container
+
+---
+
+# Deployment
+
+The application can be deployed and executed using Docker Compose.
+
+## Docker Deployment
+
+Start all services:
+
+```powershell
+docker compose up -d
+```
+
+Stop all services:
+
+```powershell
+docker compose down
+```
+
+Available services:
+
+| Service          | URL                   |
+| ---------------- | --------------------- |
+| Frontend         | http://localhost:5173 |
+| Backend API      | http://localhost:8080 |
+| API Gateway      | http://localhost:8085 |
+| Eureka Dashboard | http://localhost:8761 |
+| Prometheus       | http://localhost:9090 |
+| Grafana          | http://localhost:3000 |
+
+The Docker Compose configuration allows all components of the application to be started with a single command.
+
+---
+
+# Branch Strategy
+
+Git was used during the entire development process.
+
+Repository structure:
+
+* master – main branch
+* feature branches used during development and integration
+
+GitHub Actions workflows are executed automatically on push and pull request events.
 
 ---
 
@@ -701,82 +773,6 @@ This feature demonstrates AI integration at runtime inside the application.
 
 ---
 
-# Deployment
-
-The application can be deployed and executed using Docker Compose.
-
-## Docker Deployment
-
-Start all services:
-
-```powershell
-docker compose up -d
-```
-
-Stop all services:
-
-```powershell
-docker compose down
-```
-
-Available services:
-
-| Service          | URL                   |
-| ---------------- | --------------------- |
-| Frontend         | http://localhost:5173 |
-| Backend API      | http://localhost:8080 |
-| API Gateway      | http://localhost:8085 |
-| Eureka Dashboard | http://localhost:8761 |
-| Prometheus       | http://localhost:9090 |
-| Grafana          | http://localhost:3000 |
-
-The Docker Compose configuration allows all components of the application to be started with a single command.
-
----
-
-# Environment Variables
-
-The project supports environment-specific configurations.
-
-Examples of configurable properties:
-
-* database URL
-* database username
-* database password
-* server ports
-* Redis configuration
-* Prometheus configuration
-* Grafana configuration
-
-For testing purposes, a dedicated H2 in-memory database configuration is used.
-
-Example:
-
-```properties
-spring.jpa.hibernate.ddl-auto=create-drop
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-```
-
-Separate Spring profiles are used for development and testing environments.
-
----
-
-# Branch Strategy
-
-Git was used during the entire development process.
-
-Repository structure:
-
-* master – main branch
-* feature branches used during development and integration
-
-GitHub Actions workflows are executed automatically on push and pull request events.
-
----
-
 # Screenshots
 ## LOGIN PAGE
   <img width="1853" height="907" alt="image" src="https://github.com/user-attachments/assets/30d92f75-33ef-4df9-a7bc-fdc931b45ef8" />
@@ -798,30 +794,6 @@ GitHub Actions workflows are executed automatically on push and pull request eve
 
 ## JACOCO
 <img width="1382" height="301" alt="image" src="https://github.com/user-attachments/assets/2c3baa79-195e-445f-b767-22d63962fc7c" />
-
----
-
-# Team Members and Contributions
-
-## 405 - BDTS
-## Cimpeanu Ana-Maria
-## Iova Nicoleta-Carmen
-## Tismanaru Artemis-Constantina
-
-
-Contributions:
-
-* backend development;
-* frontend development;
-* database design;
-* CRUD implementation;
-* security and role-based access;
-* testing;
-* microservices setup;
-* monitoring setup;
-* CI/CD configuration;
-* AI features;
-* documentation.
 
 ---
 
@@ -854,6 +826,29 @@ Contributions:
 * AI runtime integration
 * CI/CD pipeline
 * Docker deployment
+
+---
+
+# Team Members and Contributions
+
+## 405 - BDTS
+## Cimpeanu Ana-Maria
+## Iova Nicoleta-Carmen
+## Tismanaru Artemis-Constantina
+
+Contributions:
+
+* backend development;
+* frontend development;
+* database design;
+* CRUD implementation;
+* security and role-based access;
+* testing;
+* microservices setup;
+* monitoring setup;
+* CI/CD configuration;
+* AI features;
+* documentation.
 
 ---
 

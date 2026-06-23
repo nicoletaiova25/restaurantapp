@@ -152,3 +152,46 @@ Visit **http://localhost:5173**
         ▼
    H2 Database (in-memory)
 ```
+
+# 12. AI Agents - Dezvoltare
+
+## GitHub Copilot pentru Pair Programming
+
+În cadrul dezvoltării aplicației a fost utilizat GitHub Copilot pentru asistarea procesului de programare. Acesta a oferit sugestii de cod în timp real pentru implementarea funcționalităților backend și frontend, contribuind la reducerea timpului de dezvoltare și la creșterea productivității.
+
+## Code Review Automatizat pentru Pull Requests
+
+GitHub Copilot a fost utilizat și pentru analiza codului din Pull Requests, oferind sugestii privind calitatea și mentenabilitatea codului.
+
+### Exemple de verificări realizate
+
+- identificarea codului duplicat;
+- sugestii pentru simplificarea metodelor și reducerea complexității;
+- recomandări privind bune practici pentru Spring Boot și React;
+- verificarea convențiilor de codare și a consistenței proiectului;
+- identificarea potențialelor probleme înainte de integrarea codului.
+
+## Generarea Automată a Documentației
+
+Instrumentele bazate pe inteligență artificială au fost utilizate pentru generarea și completarea documentației tehnice a proiectului, inclusiv:
+
+- descrierea arhitecturii bazate pe microservicii;
+- documentarea componentelor principale;
+- documentarea testelor unitare și de integrare;
+- documentarea pipeline-ului CI/CD;
+- generarea explicațiilor pentru configurările Docker și GitHub Actions.
+
+## Beneficii
+
+Utilizarea instrumentelor AI în procesul de dezvoltare a adus următoarele beneficii:
+
+- reducerea timpului de dezvoltare;
+- creșterea productivității echipei;
+- îmbunătățirea calității codului;
+- identificarea mai rapidă a erorilor;
+- automatizarea procesului de documentare;
+- suport pentru code review și refactorizare.
+
+## Concluzie
+
+GitHub Copilot a fost utilizat atât ca instrument de pair programming, cât și pentru code review automatizat și generarea documentației. Acesta a contribuit la dezvoltarea mai rapidă a aplicației și la menținerea unui nivel ridicat al calității codului.
